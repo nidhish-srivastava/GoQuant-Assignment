@@ -7,19 +7,19 @@ import TradingPairSelector from "@/components/TradingPairSelector";
 
 // Type definitions
 interface OrderbookData {
-  bids: [string, string][]; 
-  asks: [string, string][]; 
+  bids: [string, string][];
+  asks: [string, string][];
 }
 
 const Home = () => {
-  const [bids, setBids] = useState<[string, string][]>([]); 
-  const [asks, setAsks] = useState<[string, string][]>([]); 
-  const [imbalance, setImbalance] = useState<number>(0); 
-  const [spreadData, setSpreadData] = useState<number[]>([]); 
-  const [spreadLabels, setSpreadLabels] = useState<string[]>([]); 
+  const [bids, setBids] = useState<[string, string][]>([]);
+  const [asks, setAsks] = useState<[string, string][]>([]);
+  const [imbalance, setImbalance] = useState<number>(0);
+  const [spreadData, setSpreadData] = useState<number[]>([]);
+  const [spreadLabels, setSpreadLabels] = useState<string[]>([]);
   const [orderbookData, setOrderbookData] = useState<OrderbookData | null>(
     null
-  ); 
+  );
   const [selectedPair, setSelectedPair] = useState<string>("BTCUSDT");
 
   // Fetch the orderbook data
@@ -104,22 +104,6 @@ const Home = () => {
     return () => clearInterval(intervalId);
   }, [selectedPair]); // Re-run effect when selectedPair changes
 
-  // Chart data for the spread chart
-  const spreadChartData = {
-    labels: spreadLabels,
-    datasets: [
-      {
-        label: "Spread (USD)",
-        data: spreadData,
-        borderColor:
-          spreadData[spreadData.length - 1] > spreadData[spreadData.length - 2]
-            ? "green"
-            : "red", // Color change based on spread increase or decrease
-        fill: false,
-      },
-    ],
-  };
-
   return (
     <div className="p-4 bg-gray-100">
       <h2 className="text-2xl font-bold mb-4">Order Book - {selectedPair}</h2>
@@ -128,7 +112,7 @@ const Home = () => {
         setSelectedPair={setSelectedPair}
       />
       <div className="mt-8">
-        {spreadChartData && <SpreadIndicator spreadChartData={spreadChartData} />}
+        <SpreadIndicator spreadLabels={spreadLabels} spreadData={spreadData} />
       </div>
       <div className="border p-4 bg-white rounded shadow-md w-full mb-4">
         <h2 className="text-xl font-semibold mb-2">
