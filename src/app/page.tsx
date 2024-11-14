@@ -1,101 +1,147 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useState } from "react";
+import MarketDepthChart from "@/components/MarketDepthChart";
+import SpreadIndicator from "@/components/SpreadIndicator";
+import OrderbookDisplay from "@/components/OrderbookDisplay";
+import TradingPairSelector from "@/components/TradingPairSelector";
 
-export default function Home() {
+// Type definitions
+interface OrderbookData {
+  bids: [string, string][]; 
+  asks: [string, string][]; 
+}
+
+const Home = () => {
+  const [bids, setBids] = useState<[string, string][]>([]); 
+  const [asks, setAsks] = useState<[string, string][]>([]); 
+  const [imbalance, setImbalance] = useState<number>(0); 
+  const [spreadData, setSpreadData] = useState<number[]>([]); 
+  const [spreadLabels, setSpreadLabels] = useState<string[]>([]); 
+  const [orderbookData, setOrderbookData] = useState<OrderbookData | null>(
+    null
+  ); 
+  const [selectedPair, setSelectedPair] = useState<string>("BTCUSDT");
+
+  // Fetch the orderbook data
+  const fetchOrderbookHandler = async () => {
+    const url = `https://binance43.p.rapidapi.com/depth?symbol=${selectedPair}&limit=10`;
+    const options = {
+      method: "GET",
+      headers: {
+        "x-rapidapi-key": process.env.NEXT_PUBLIC_RAPID_API_KEY!,
+        "x-rapidapi-host": "binance43.p.rapidapi.com",
+      },
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const result = await response.json();
+      const newBids = result.bids;
+      const newAsks = result.asks;
+
+      setOrderbookData({
+        bids: newBids,
+        asks: newAsks,
+      });
+      setBids(newBids);
+      setAsks(newAsks);
+      calculateImbalance(newBids, newAsks);
+      updateSpreadData(newBids, newAsks);
+    } catch (error) {
+      console.error("Error fetching orderbook data:", error);
+    }
+  };
+
+  const calculateImbalance = (
+    bids: [string, string][],
+    asks: [string, string][]
+  ) => {
+    const totalBuyVolume = bids.reduce(
+      (total, bid) => total + parseFloat(bid[1]),
+      0
+    );
+    const totalSellVolume = asks.reduce(
+      (total, ask) => total + parseFloat(ask[1]),
+      0
+    );
+    const imbalance =
+      (totalBuyVolume - totalSellVolume) / (totalBuyVolume + totalSellVolume);
+    setImbalance(imbalance);
+  };
+
+  const updateSpreadData = (
+    bids: [string, string][],
+    asks: [string, string][]
+  ) => {
+    const bestBid = parseFloat(bids[0][0]);
+    const bestAsk = parseFloat(asks[0][0]);
+    const spread = bestAsk - bestBid;
+
+    const currentTime = new Date().toLocaleTimeString();
+
+    setSpreadData((prevData) => {
+      const newData = [...prevData, spread];
+      if (newData.length > 60) newData.shift();
+      return newData;
+    });
+
+    setSpreadLabels((prevLabels) => {
+      const newLabels = [...prevLabels, currentTime];
+      if (newLabels.length > 60) newLabels.shift();
+      return newLabels;
+    });
+  };
+
+  // Effect to fetch orderbook data whenever selectedPair changes
+  useEffect(() => {
+    // Fetch initial data for the selected pair
+    fetchOrderbookHandler();
+
+    // Set up interval to fetch data every second
+    const intervalId = setInterval(fetchOrderbookHandler, 1000);
+
+    // Clear interval on component unmount or when selectedPair changes
+    return () => clearInterval(intervalId);
+  }, [selectedPair]); // Re-run effect when selectedPair changes
+
+  // Chart data for the spread chart
+  const spreadChartData = {
+    labels: spreadLabels,
+    datasets: [
+      {
+        label: "Spread (USD)",
+        data: spreadData,
+        borderColor:
+          spreadData[spreadData.length - 1] > spreadData[spreadData.length - 2]
+            ? "green"
+            : "red", // Color change based on spread increase or decrease
+        fill: false,
+      },
+    ],
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="p-4 bg-gray-100">
+      <h2 className="text-2xl font-bold mb-4">Order Book - {selectedPair}</h2>
+      <TradingPairSelector
+        selectedPair={selectedPair}
+        setSelectedPair={setSelectedPair}
+      />
+      <div className="mt-8">
+        {spreadChartData && <SpreadIndicator spreadChartData={spreadChartData} />}
+      </div>
+      <div className="border p-4 bg-white rounded shadow-md w-full mb-4">
+        <h2 className="text-xl font-semibold mb-2">
+          Orderbook Imbalance Indicator
+        </h2>
+        <p className="text-lg">{(imbalance * 100).toFixed(2)}%</p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <OrderbookDisplay asks={asks} bids={bids} />
+
+      {orderbookData && <MarketDepthChart orderbookData={orderbookData} />}
     </div>
   );
-}
+};
+
+export default Home;
