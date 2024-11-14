@@ -5,7 +5,7 @@ GoQuant is a **Next.js** application that displays a real-time orderbook with as
 ## Features
 
 1. **Orderbook Display**
-   - Displays the real-time orderbook with 10 levels of the best bids and asks for the selected trading pair (e.g., BTC-USD).
+   - Displays the real-time orderbook with 10 levels of the best bids and asks for the selected trading pair (e.g., BTC-USD,ETH-USD, XRP-USD).
 
 2. **Spread Indicator**
    - A live graph of the spread indicator, updating every second and rolling over a 1-minute period.
