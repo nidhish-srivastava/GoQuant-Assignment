@@ -1,6 +1,6 @@
 # GoQuant Assignment
 
-GoQuant is a **Next.js** application that displays a real-time orderbook with associated market indicators for cryptocurrency trading, specifically for the **BTC-USD** pair.
+GoQuant is a application that displays a real-time orderbook with associated market indicators for cryptocurrency trading, specifically for the **BTC-USD** pair.
 
 ## Features
 
