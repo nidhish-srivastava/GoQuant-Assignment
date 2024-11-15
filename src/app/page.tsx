@@ -5,11 +5,10 @@ import SpreadIndicator from "@/components/SpreadIndicator";
 import OrderbookDisplay from "@/components/OrderbookDisplay";
 import TradingPairSelector from "@/components/TradingPairSelector";
 
-// Type definitions
-interface OrderbookData {
+type OrderbookData = {
   bids: [string, string][];
   asks: [string, string][];
-}
+};
 
 const Home = () => {
   const [bids, setBids] = useState<[string, string][]>([]);
@@ -121,8 +120,7 @@ const Home = () => {
         </h2>
         <p className="text-lg">{(imbalance * 100).toFixed(2)}%</p>
       </div>
-      {orderbookData && 
-      <MarketDepthChart orderbookData={orderbookData} />}
+      {orderbookData && <MarketDepthChart orderbookData={orderbookData} />}
     </div>
   );
 };
