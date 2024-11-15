@@ -111,6 +111,7 @@ const Home = () => {
         selectedPair={selectedPair}
         setSelectedPair={setSelectedPair}
       />
+      <OrderbookDisplay asks={asks} bids={bids} />
       <div className="mt-8">
         <SpreadIndicator spreadLabels={spreadLabels} spreadData={spreadData} />
       </div>
@@ -120,10 +121,8 @@ const Home = () => {
         </h2>
         <p className="text-lg">{(imbalance * 100).toFixed(2)}%</p>
       </div>
-
-      <OrderbookDisplay asks={asks} bids={bids} />
-
-      {orderbookData && <MarketDepthChart orderbookData={orderbookData} />}
+      {orderbookData && 
+      <MarketDepthChart orderbookData={orderbookData} />}
     </div>
   );
 };
